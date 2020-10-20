@@ -20,7 +20,7 @@ const (
 )
 
 // VERSION represent beego web framework version.
-const VERSION = "1.0.0"
+const VERSION = "0.0.1"
 
 // DefaultWriter is the default io.Writer used by Gin for debug output and
 // middleware output like Logger() or Recovery().

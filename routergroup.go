@@ -38,7 +38,7 @@ func (group *RouterGroup) addRoute(method string, comp string, handler HandlerFu
 	group.engine.router.addRoute(method, pattern, handler)
 
 	if IsDebugging() {
-		debugPrint("Route %4s - %s", method, pattern)
+		debugPrint("Route  %5s - %s", method, pattern)
 	}
 }
 

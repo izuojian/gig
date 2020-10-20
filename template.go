@@ -145,7 +145,7 @@ func LoadTemplates(dir string) error {
 			gigTemplates[file] = t
 			templatesLock.Unlock()
 			if IsDebugging() {
-				debugPrint("Template %4s - %v", file, t)
+				debugPrint("TPL: %4s", file)
 			}
 		}
 	}

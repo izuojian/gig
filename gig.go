@@ -71,6 +71,8 @@ func (engine *Engine) Templates(viewPath string) {
 
 // 运行http server
 func (engine *Engine) Run(addr string) (err error) {
+	debugPrint("Running in \"%s\" mode", Mode())
+	debugPrint("HTTP server running on%s %s %s", ConsoleFrontColorCyan, addr, ConsoleFrontColorWhite)
 	return http.ListenAndServe(addr, engine)
 }
 

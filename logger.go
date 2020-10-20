@@ -19,6 +19,17 @@ const (
 )
 
 const (
+	ConsoleFrontColorWhite  string = "\u001B[30m"
+	ConsoleFrontColorRed    string = "\u001B[31m"
+	ConsoleFrontColorGreen  string = "\u001B[32m"
+	ConsoleFrontColorYellow string = "\u001B[33m"
+	ConsoleFrontColorBlue   string = "\u001B[34m"
+	ConsoleFrontColorPink   string = "\u001B[35m"
+	ConsoleFrontColorCyan   string = "\u001B[36m"
+	ConsoleFrontColorBlack  string = "\u001B[37m"
+)
+
+const (
 	green   = "\033[97;42m"
 	white   = "\033[90;47m"
 	yellow  = "\033[90;43m"
@@ -80,13 +91,17 @@ func (p *LogFormatterParams) StatusCodeColor() string {
 
 	switch {
 	case code >= http.StatusOK && code < http.StatusMultipleChoices:
-		return green
+		// return green
+		return ConsoleFrontColorGreen
 	case code >= http.StatusMultipleChoices && code < http.StatusBadRequest:
-		return white
+		// return white
+		return ConsoleFrontColorWhite
 	case code >= http.StatusBadRequest && code < http.StatusInternalServerError:
-		return yellow
+		// return yellow
+		return ConsoleFrontColorYellow
 	default:
-		return red
+		// return red
+		return ConsoleFrontColorRed
 	}
 }
 
@@ -126,24 +141,24 @@ func (p *LogFormatterParams) IsOutputColor() bool {
 
 // defaultLogFormatter is the default log format function Logger middleware uses.
 var defaultLogFormatter = func(param LogFormatterParams) string {
-	var statusColor, methodColor, resetColor string
+	var statusColor string
 	if param.IsOutputColor() {
 		statusColor = param.StatusCodeColor()
-		methodColor = param.MethodColor()
-		resetColor = param.ResetColor()
 	}
 
 	if param.Latency > time.Minute {
 		// Truncate in a golang < 1.8 safe way
 		param.Latency = param.Latency - param.Latency%time.Second
 	}
-	return fmt.Sprintf("[GIG] %v |%s %3d %s| %13v | %15s |%s %-7s %s %#v\n%s",
-		param.TimeStamp.Format("2006/01/02 - 15:04:05"),
-		statusColor, param.StatusCode, resetColor,
+	return fmt.Sprintf("%s[GIG]%v |%3d| %13v | %15s |%-7s %#v%s\n%s",
+		statusColor,
+		param.TimeStamp.Format("2006-01-02 15:04:05"),
+		param.StatusCode,
 		param.Latency,
 		param.ClientIP,
-		methodColor, param.Method, resetColor,
+		param.Method,
 		param.Path,
+		ConsoleFrontColorWhite,
 		param.ErrorMessage,
 	)
 }

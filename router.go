@@ -18,13 +18,13 @@ type router struct {
 var (
 	// HTTPMETHOD list the supported http methods.
 	HTTPMETHODS = map[string]bool{
-		"GET":       true,
-		"POST":      true,
-		"PUT":       true,
-		"DELETE":    true,
-		"PATCH":     true,
-		"OPTIONS":   true,
-		"HEAD":      true,
+		"GET":     true,
+		"POST":    true,
+		"PUT":     true,
+		"DELETE":  true,
+		"PATCH":   true,
+		"OPTIONS": true,
+		"HEAD":    true,
 	}
 )
 
