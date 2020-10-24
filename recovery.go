@@ -3,9 +3,8 @@ package gig
 import (
 	"bytes"
 	"fmt"
-	"io"
+	"github.com/izuojian/gig/logs"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -22,17 +21,8 @@ var (
 	slash     = []byte("/")
 )
 
-// Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
+// Recovery 错误恢复中间件
 func Recovery() HandlerFunc {
-	return RecoveryWithWriter(DefaultErrorWriter)
-}
-
-// 错误恢复中间件
-func RecoveryWithWriter(out io.Writer) HandlerFunc {
-	var logger *log.Logger
-	if out != nil {
-		logger = log.New(out, "\n\n\x1b[31m", log.LstdFlags)
-	}
 	return func(c *Context) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -46,29 +36,34 @@ func RecoveryWithWriter(out io.Writer) HandlerFunc {
 						}
 					}
 				}
-				if logger != nil {
-					stack := stack(3)
-					httpRequest, _ := httputil.DumpRequest(c.Request, false)
-					headers := strings.Split(string(httpRequest), "\r\n")
-					for idx, header := range headers {
-						current := strings.Split(header, ":")
-						if current[0] == "Authorization" {
-							headers[idx] = current[0] + ": *"
-						}
-					}
-					if brokenPipe {
-						logger.Printf("%s\n%s%s", err, string(httpRequest), reset)
-					} else if IsDebugging() {
-						logger.Printf("[Recovery] %s panic recovered:\n%s\n%s\n%s%s",
-							timeFormat(time.Now()), strings.Join(headers, "\r\n"), err, stack, reset)
-					} else {
-						logger.Printf("[Recovery] %s panic recovered:\n%s\n%s%s",
-							timeFormat(time.Now()), err, stack, reset)
-					}
-				}
 
+				message := ""
 				//message := fmt.Sprintf("%s", err)
 				//logger.Printf("%s\n\n", trace(message))
+
+				stack := stack(3)
+				httpRequest, _ := httputil.DumpRequest(c.Request, false)
+				headers := strings.Split(string(httpRequest), "\r\n")
+				for idx, header := range headers {
+					current := strings.Split(header, ":")
+					if current[0] == "Authorization" {
+						headers[idx] = current[0] + ": *"
+					}
+				}
+				if brokenPipe {
+					message = fmt.Sprintf("%s\n%s%s", err, string(httpRequest), reset)
+				} else if IsDebugging() {
+					message = fmt.Sprintf("[Recovery] %s panic recovered:\n%s\n%s\n%s%s",
+						timeFormat(time.Now()), strings.Join(headers, "\r\n"), err, stack, reset)
+				} else {
+					message = fmt.Sprintf("[Recovery] %s panic recovered:\n%s\n%s%s",
+						timeFormat(time.Now()), err, stack, reset)
+				}
+
+				if IsDebugging() {
+					ConsolePrintError(message)
+				}
+				logs.Error(message)
 
 				// If the connection is dead, we can't write a status to it.
 				if brokenPipe {

@@ -1,12 +1,5 @@
 package gig
 
-import (
-	"io"
-	"os"
-)
-
-const EnvGigMode = "GIG_MODE"
-
 const (
 	DevMode = "dev"
 	TestMode = "test"
@@ -19,20 +12,8 @@ const (
 	prodModeCode
 )
 
-// VERSION represent beego web framework version.
-const VERSION = "0.0.1"
-
-// DefaultWriter is the default io.Writer used by Gin for debug output and
-// middleware output like Logger() or Recovery().
-// Note that both Logger and Recovery provides custom ways to configure their
-// output io.Writer.
-// To support coloring in Windows use:
-// 		import "github.com/mattn/go-colorable"
-// 		gin.DefaultWriter = colorable.NewColorableStdout()
-var DefaultWriter io.Writer = os.Stdout
-
-// DefaultErrorWriter is the default io.Writer used by Gin to debug errors
-var DefaultErrorWriter io.Writer = os.Stderr
+// 当前版本
+const VERSION = "0.0.3"
 
 var gigMode = devModeCode
 var modeName = DevMode

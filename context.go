@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"github.com/izuojian/gig/logs"
 	"io"
 	"io/ioutil"
 	"math"
@@ -311,7 +312,8 @@ func (c *Context) getPostFormCache() {
 		req := c.Request
 		if err := req.ParseMultipartForm(c.engine.MaxMultipartMemory); err != nil {
 			if err != http.ErrNotMultipart {
-				debugPrint("error on parse multipart form array: %v", err)
+				ConsolePrintError("error on parse multipart form array: %v", err)
+				logs.Error("error on parse multipart form array: %v", err)
 			}
 		}
 		c.postFormCache = req.PostForm
@@ -362,7 +364,7 @@ func (c *Context) getFormCache() {
 		req := c.Request
 		if err := req.ParseMultipartForm(c.engine.MaxMultipartMemory); err != nil {
 			if err != http.ErrNotMultipart {
-				debugPrint("error on parse multipart form array: %v", err)
+				logs.Error("error on parse multipart form array: %v", err)
 			}
 		}
 		c.formCache = req.Form

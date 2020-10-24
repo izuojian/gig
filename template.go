@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/izuojian/gig/internal/utils"
+	"github.com/izuojian/gig/logs"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -59,7 +60,7 @@ func ExecuteTemplate(wr io.Writer, name string, data interface{}) error {
 			err = t.Execute(wr, data)
 		}
 		if err != nil {
-			debugPrint("template Execute err: %v", err)
+			logs.Error("template Execute err: %v", err)
 		}
 		return err
 	}
@@ -138,14 +139,14 @@ func LoadTemplates(dir string) error {
 				t, err = getTemplate(self.root, fs, file, v...)
 			}
 			if err != nil {
-				debugPrint("parse template err:", file, err)
+				logs.Error("parse template err:", file, err)
 				templatesLock.Unlock()
 				return err
 			}
 			gigTemplates[file] = t
 			templatesLock.Unlock()
 			if IsDebugging() {
-				debugPrint("TPL: %4s", file)
+				ConsolePrint("TPL: %4s", file)
 			}
 		}
 	}
@@ -225,7 +226,7 @@ func _getTemplate(t0 *template.Template, root string, fs http.FileSystem, subMod
 					var subMods1 [][]string
 					t, subMods1, err = getTplDeep(root, fs, otherFile, "", t)
 					if err != nil {
-						debugPrint("template parse file err:", err)
+						logs.Error("template parse file err:", err)
 					} else if len(subMods1) > 0 {
 						t, err = _getTemplate(t, root, fs, subMods1, others...)
 					}
@@ -239,13 +240,13 @@ func _getTemplate(t0 *template.Template, root string, fs http.FileSystem, subMod
 				f, err := fs.Open(fileAbsPath)
 				if err != nil {
 					f.Close()
-					debugPrint("template file parse error, not success open file:", err)
+					logs.Error("template file parse error, not success open file:", err)
 					continue
 				}
 				data, err = ioutil.ReadAll(f)
 				f.Close()
 				if err != nil {
-					debugPrint("template file parse error, not success read file:", err)
+					logs.Error("template file parse error, not success read file:", err)
 					continue
 				}
 				reg := regexp.MustCompile(gigTplDelimLeft + "[ ]*define[ ]+\"([^\"]+)\"")
@@ -255,11 +256,11 @@ func _getTemplate(t0 *template.Template, root string, fs http.FileSystem, subMod
 						var subMods1 [][]string
 						t, subMods1, err = getTplDeep(root, fs, otherFile, "", t)
 						if err != nil {
-							debugPrint("template parse file err:", err)
+							logs.Error("template parse file err:", err)
 						} else if len(subMods1) > 0 {
 							t, err = _getTemplate(t, root, fs, subMods1, others...)
 							if err != nil {
-								debugPrint("template parse file err:", err)
+								logs.Error("template parse file err:", err)
 							}
 						}
 						break

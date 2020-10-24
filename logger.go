@@ -1,60 +1,10 @@
 package gig
 
 import (
-	"fmt"
-	"io"
+	"github.com/izuojian/gig/logs"
 	"net/http"
-	"os"
 	"time"
-
-	"github.com/mattn/go-isatty"
 )
-
-type consoleColorModeValue int
-
-const (
-	autoColor consoleColorModeValue = iota
-	disableColor
-	forceColor
-)
-
-const (
-	ConsoleFrontColorWhite  string = "\u001B[30m"
-	ConsoleFrontColorRed    string = "\u001B[31m"
-	ConsoleFrontColorGreen  string = "\u001B[32m"
-	ConsoleFrontColorYellow string = "\u001B[33m"
-	ConsoleFrontColorBlue   string = "\u001B[34m"
-	ConsoleFrontColorPink   string = "\u001B[35m"
-	ConsoleFrontColorCyan   string = "\u001B[36m"
-	ConsoleFrontColorBlack  string = "\u001B[37m"
-)
-
-const (
-	green   = "\033[97;42m"
-	white   = "\033[90;47m"
-	yellow  = "\033[90;43m"
-	red     = "\033[97;41m"
-	blue    = "\033[97;44m"
-	magenta = "\033[97;45m"
-	cyan    = "\033[97;46m"
-	reset   = "\033[0m"
-)
-
-var consoleColorMode = autoColor
-
-// LoggerConfig defines the config for Logger middleware.
-type LoggerConfig struct {
-	// Optional. Default value is gin.defaultLogFormatter
-	Formatter LogFormatter
-
-	// Output is a writer where logs are written.
-	// Optional. Default value is gin.DefaultWriter.
-	Output io.Writer
-
-	// SkipPaths is a url path array which logs are not written.
-	// Optional.
-	SkipPaths []string
-}
 
 // LogFormatter gives the signature of the formatter function passed to LoggerWithFormatter
 type LogFormatter func(params LogFormatterParams) string
@@ -85,163 +35,24 @@ type LogFormatterParams struct {
 	Keys map[string]interface{}
 }
 
-// StatusCodeColor is the ANSI color for appropriately logging http status code to a terminal.
+// 控制台输出颜色控制
 func (p *LogFormatterParams) StatusCodeColor() string {
 	code := p.StatusCode
 
 	switch {
 	case code >= http.StatusOK && code < http.StatusMultipleChoices:
-		// return green
 		return ConsoleFrontColorGreen
 	case code >= http.StatusMultipleChoices && code < http.StatusBadRequest:
-		// return white
 		return ConsoleFrontColorWhite
 	case code >= http.StatusBadRequest && code < http.StatusInternalServerError:
-		// return yellow
 		return ConsoleFrontColorYellow
 	default:
-		// return red
 		return ConsoleFrontColorRed
 	}
 }
 
-// MethodColor is the ANSI color for appropriately logging http method to a terminal.
-func (p *LogFormatterParams) MethodColor() string {
-	method := p.Method
-
-	switch method {
-	case http.MethodGet:
-		return blue
-	case http.MethodPost:
-		return cyan
-	case http.MethodPut:
-		return yellow
-	case http.MethodDelete:
-		return red
-	case http.MethodPatch:
-		return green
-	case http.MethodHead:
-		return magenta
-	case http.MethodOptions:
-		return white
-	default:
-		return reset
-	}
-}
-
-// ResetColor resets all escape attributes.
-func (p *LogFormatterParams) ResetColor() string {
-	return reset
-}
-
-// IsOutputColor indicates whether can colors be outputted to the log.
-func (p *LogFormatterParams) IsOutputColor() bool {
-	return consoleColorMode == forceColor || (consoleColorMode == autoColor && p.isTerm)
-}
-
-// defaultLogFormatter is the default log format function Logger middleware uses.
-var defaultLogFormatter = func(param LogFormatterParams) string {
-	var statusColor string
-	if param.IsOutputColor() {
-		statusColor = param.StatusCodeColor()
-	}
-
-	if param.Latency > time.Minute {
-		// Truncate in a golang < 1.8 safe way
-		param.Latency = param.Latency - param.Latency%time.Second
-	}
-	return fmt.Sprintf("%s[GIG]%v |%3d| %13v | %15s |%-7s %#v%s\n%s",
-		statusColor,
-		param.TimeStamp.Format("2006-01-02 15:04:05"),
-		param.StatusCode,
-		param.Latency,
-		param.ClientIP,
-		param.Method,
-		param.Path,
-		ConsoleFrontColorWhite,
-		param.ErrorMessage,
-	)
-}
-
-// DisableConsoleColor disables color output in the console.
-func DisableConsoleColor() {
-	consoleColorMode = disableColor
-}
-
-// ForceConsoleColor force color output in the console.
-func ForceConsoleColor() {
-	consoleColorMode = forceColor
-}
-
-// ErrorLogger returns a handlerfunc for any error type.
-func ErrorLogger() HandlerFunc {
-	return ErrorLoggerT(ErrorTypeAny)
-}
-
-// ErrorLoggerT returns a handlerfunc for a given error type.
-func ErrorLoggerT(typ ErrorType) HandlerFunc {
-	return func(c *Context) {
-		c.Next()
-		errors := c.Errors.ByType(typ)
-		if len(errors) > 0 {
-			c.JSON(-1, errors)
-		}
-	}
-}
-
-// Logger instances a Logger middleware that will write the logs to gin.DefaultWriter.
-// By default gin.DefaultWriter = os.Stdout.
+// Logger中间件实例
 func Logger() HandlerFunc {
-	return LoggerWithConfig(LoggerConfig{})
-}
-
-// LoggerWithFormatter instance a Logger middleware with the specified log format function.
-func LoggerWithFormatter(f LogFormatter) HandlerFunc {
-	return LoggerWithConfig(LoggerConfig{
-		Formatter: f,
-	})
-}
-
-// LoggerWithWriter instance a Logger middleware with the specified writer buffer.
-// Example: os.Stdout, a file opened in write mode, a socket...
-func LoggerWithWriter(out io.Writer, notlogged ...string) HandlerFunc {
-	return LoggerWithConfig(LoggerConfig{
-		Output:    out,
-		SkipPaths: notlogged,
-	})
-}
-
-// LoggerWithConfig instance a Logger middleware with config.
-func LoggerWithConfig(conf LoggerConfig) HandlerFunc {
-	formatter := conf.Formatter
-	if formatter == nil {
-		formatter = defaultLogFormatter
-	}
-
-	out := conf.Output
-	if out == nil {
-		out = DefaultWriter
-	}
-
-	notlogged := conf.SkipPaths
-
-	isTerm := true
-
-	if w, ok := out.(*os.File); !ok || os.Getenv("TERM") == "dumb" ||
-		(!isatty.IsTerminal(w.Fd()) && !isatty.IsCygwinTerminal(w.Fd())) {
-		isTerm = false
-	}
-
-	var skip map[string]struct{}
-
-	if length := len(notlogged); length > 0 {
-		skip = make(map[string]struct{}, length)
-
-		for _, path := range notlogged {
-			skip[path] = struct{}{}
-		}
-	}
-
 	return func(c *Context) {
 		// Start timer
 		start := time.Now()
@@ -251,32 +62,47 @@ func LoggerWithConfig(conf LoggerConfig) HandlerFunc {
 		// Process request
 		c.Next()
 
-		// Log only when path is not being skipped
-		if _, ok := skip[path]; !ok {
-			param := LogFormatterParams{
-				Request: c.Request,
-				isTerm:  isTerm,
-				// Keys:    c.Keys,
-			}
-
-			// Stop timer
-			param.TimeStamp = time.Now()
-			param.Latency = param.TimeStamp.Sub(start)
-
-			param.ClientIP = c.ClientIP()
-			param.Method = c.Request.Method
-			param.StatusCode = c.StatusCode
-			param.ErrorMessage = c.Errors.ByType(ErrorTypePrivate).String()
-
-			// param.BodySize = c.Writer.Size()
-
-			if raw != "" {
-				path = path + "?" + raw
-			}
-
-			param.Path = path
-
-			fmt.Fprint(out, formatter(param))
+		param := LogFormatterParams{
+			Request: c.Request,
 		}
+
+		// Stop timer
+		param.TimeStamp = time.Now()
+		param.Latency = param.TimeStamp.Sub(start)
+
+		param.ClientIP = c.ClientIP()
+		param.Method = c.Request.Method
+		param.StatusCode = c.StatusCode
+		param.ErrorMessage = c.Errors.ByType(ErrorTypePrivate).String()
+
+		// param.BodySize = c.Writer.Size()
+
+		if raw != "" {
+			path = path + "?" + raw
+		}
+		param.Path = path
+
+		if IsDebugging() {
+			ConsolePrint("%s%v |%3d| %13v | %15s |%-7s %#v%s%s",
+				param.StatusCodeColor(),
+				param.TimeStamp.Format("2006-01-02 15:04:05"),
+				param.StatusCode,
+				param.Latency,
+				param.ClientIP,
+				param.Method,
+				param.Path,
+				ConsoleFrontColorReset,
+				param.ErrorMessage,
+			)
+		}
+
+		logs.Info("%d|%v|%s|%s %s %s",
+			param.StatusCode,
+			param.Latency,
+			param.ClientIP,
+			param.Method,
+			param.Path,
+			param.ErrorMessage,
+		)
 	}
 }
