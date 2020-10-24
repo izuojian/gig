@@ -74,7 +74,7 @@ func NewLogger(c LogConfig) *zap.SugaredLogger {
 		zapcore.AddSync(&hook),                   // 打印到控制台和文件
 		zap.NewAtomicLevelAt(zap.DebugLevel),     // 日志级别
 	)
-	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1)).Sugar()
+	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(3)).Sugar()
 }
 
 // Debug
