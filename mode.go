@@ -36,7 +36,7 @@ func SetMode(value string) {
 	modeName = value
 }
 
-// Mode returns currently gin mode.
+// Mode 返回当前运行模式
 func Mode() string {
 	return modeName
 }

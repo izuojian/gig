@@ -70,7 +70,7 @@ func NewLogger(c LogConfig) *zap.SugaredLogger {
 	}
 
 	core := zapcore.NewCore(
-		zapcore.NewConsoleEncoder(encoderConfig), // 编码配置器配置, 输出Json格式：NewConsoleEncoder
+		zapcore.NewConsoleEncoder(encoderConfig), // 编码配置器配置, 输出Json格式：NewJSONEncoder
 		zapcore.AddSync(&hook),                   // 打印到控制台和文件
 		zap.NewAtomicLevelAt(zap.DebugLevel),     // 日志级别
 	)

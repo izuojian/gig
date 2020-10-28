@@ -91,6 +91,6 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := newContext(w, req)
 	ctx.handlers = middlewares
 	ctx.engine = engine
-
+	ctx.RequestId = ctx.GenerateRequestId()
 	engine.router.handle(ctx)
 }

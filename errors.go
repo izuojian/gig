@@ -1,14 +1,13 @@
 package gig
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
-
-	"github.com/izuojian/gig/internal/json"
 )
 
-// ErrorType is an unsigned 64-bit error code as defined in the gin spec.
+// ErrorType
 type ErrorType uint64
 
 const (
@@ -87,7 +86,6 @@ func (msg *Error) IsType(flags ErrorType) bool {
 }
 
 // ByType returns a readonly copy filtered the byte.
-// ie ByType(gin.ErrorTypePublic) returns a slice of errors with type=ErrorTypePublic.
 func (a errorMsgs) ByType(typ ErrorType) errorMsgs {
 	if len(a) == 0 {
 		return nil

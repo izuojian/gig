@@ -27,9 +27,9 @@ type LogFormatterParams struct {
 	Path string
 	// ErrorMessage is set if error has occurred in processing the request.
 	ErrorMessage string
-	// isTerm shows whether does gin's output descriptor refers to a terminal.
+	// isTerm 是否终端
 	isTerm bool
-	// BodySize is the size of the Response Body
+	// BodySize 响应体大小
 	BodySize int
 	// Keys are the keys set on the request's context.
 	Keys map[string]interface{}

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/izuojian/gig/logs"
+	"github.com/satori/go.uuid"
 	"io"
 	"io/ioutil"
 	"math"
@@ -63,6 +64,9 @@ type Context struct {
 	// SameSite allows a server to define a cookie attribute making it impossible for
 	// the browser to send this cookie along with cross-site requests.
 	sameSite http.SameSite
+
+	//
+	RequestId string
 }
 
 // 构造方法
@@ -454,17 +458,18 @@ func (c *Context) ClientIP() string {
 /************************************/
 /******** 响应数据渲染 ********/
 /************************************/
+// Redirect 跳转
 func (c *Context) Redirect(status int, localurl string) {
 	http.Redirect(c.Writer, c.Request, localurl, status)
 }
 
-// 设置 HTTP 响应状态码
+// Status 设置 HTTP 响应状态码
 func (c *Context) Status(code int) {
 	c.StatusCode = code
 	c.Writer.WriteHeader(code)
 }
 
-// 设置 HTTP 响应头信息
+// Header 设置 HTTP 响应头信息
 // 如果 value == "" 则会删除当前header
 func (c *Context) Header(key, value string) {
 	if value == "" {
@@ -474,13 +479,13 @@ func (c *Context) Header(key, value string) {
 	c.Writer.Header().Set(key, value)
 }
 
-// 响应失败
+// Fail 响应失败
 func (c *Context) Fail(code int, err string) {
 	c.index = int8(len(c.handlers))
 	c.JSON(code, H{"message": err})
 }
 
-// 响应数据
+// Data 响应数据
 func (c *Context) Data(code int, data []byte) {
 	c.Status(code)
 	_, err := c.Writer.Write(data)
@@ -489,7 +494,7 @@ func (c *Context) Data(code int, data []byte) {
 	}
 }
 
-// 响应String格式数据
+// String 响应String格式数据
 func (c *Context) String(code int, format string, values ...interface{}) {
 	c.Header("Content-Type", "test/plain")
 	c.Status(code)
@@ -499,7 +504,7 @@ func (c *Context) String(code int, format string, values ...interface{}) {
 	}
 }
 
-// 响应JSON格式数据
+// JSON 响应JSON格式数据
 func (c *Context) JSON(code int, obj interface{}) {
 	c.Header("Content-Type", "application/json")
 	c.Status(code)
@@ -510,7 +515,7 @@ func (c *Context) JSON(code int, obj interface{}) {
 	}
 }
 
-// 响应HTML格式数据
+// HTML 响应HTML格式数据
 // 类似Beego使用的方法
 func (c *Context) HTML(code int, name string, data interface{}) {
 	c.Header("Content-Type", "text/html")
@@ -518,6 +523,11 @@ func (c *Context) HTML(code int, name string, data interface{}) {
 	if err := ExecuteTemplate(c.Writer, name, data); err != nil {
 		c.Fail(http.StatusInternalServerError, err.Error())
 	}
+}
+
+// GenerateRequestId 每个请求生成一个RequestID
+func (c *Context) GenerateRequestId() string {
+	return uuid.NewV4().String()
 }
 
 // 响应HTML格式数据
