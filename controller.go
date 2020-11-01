@@ -18,6 +18,7 @@ type Controller struct {
 // ControllerInterface is an interface to uniform all controller handler.
 type ControllerInterface interface {
 	Init(ctx *Context, controllerName, actionName string, appController interface{})
+	Prepare()
 	HandlerFunc(fn string) bool
 }
 
@@ -29,6 +30,9 @@ func (c *Controller) Init(ctx *Context, controllerName, actionName string, appCo
 	c.AppController = appController
 	c.methodMapping = make(map[string]func())
 }
+
+// Prepare runs after Init before request function execution.
+func (c *Controller) Prepare() {}
 
 // HandlerFunc call function with the name
 func (c *Controller) HandlerFunc(fnname string) bool {

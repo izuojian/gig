@@ -88,9 +88,9 @@ func (group *RouterGroup) ANY(pattern string, handler HandlerFunc) {
 	group.addRoute(http.MethodHead, pattern, handler)
 }
 
-// 新增控制器路由，这里的路由需要对应一个控制器和方法，控制器继承 gig.Controller
-//   示例：router.Router("/index", &IndexController{}, "get:Index")
-//        router.Router("/login", &IndexController{}, "post:Login")
+// Router 新增控制器路由，这里的路由需要对应一个控制器和方法，控制器继承 gig.Controller
+// 示例：router.Router("get", "/index", &IndexController{}, "Index")
+//      router.Router("post", "/login", &IndexController{}, "Login")
 func (group *RouterGroup) Router(pattern string, c ControllerInterface, mappingMethod string) {
 	semis := strings.Split(mappingMethod, ":")
 	if len(semis) != 2 {
@@ -119,6 +119,7 @@ func (group *RouterGroup) Router(pattern string, c ControllerInterface, mappingM
 	// 把Controller方法转化为 HandlerFunc
 	group.addRoute(method, pattern, func(ctx *Context) {
 		execController.Init(ctx, t.Name(), funcName, execController)
+		execController.Prepare()
 		runFunc.Call(nil)
 	})
 }
