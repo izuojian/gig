@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/go-ini/ini"
+	"gopkg.in/ini.v1"
 )
 
 type File = ini.File

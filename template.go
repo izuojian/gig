@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/izuojian/gig/internal/utils"
-	"github.com/izuojian/gig/logs"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -60,7 +59,7 @@ func ExecuteTemplate(wr io.Writer, name string, data interface{}) error {
 			err = t.Execute(wr, data)
 		}
 		if err != nil {
-			logs.Error("template Execute err: %v", err)
+			ErrorLogger.Errorf("template Execute err: %v", err)
 		}
 		return err
 	}
@@ -139,7 +138,7 @@ func LoadTemplates(dir string) error {
 				t, err = getTemplate(self.root, fs, file, v...)
 			}
 			if err != nil {
-				logs.Error("parse template err:", file, err)
+				ErrorLogger.Errorf("parse template %s err: %v", file, err)
 				templatesLock.Unlock()
 				return err
 			}
@@ -226,7 +225,7 @@ func _getTemplate(t0 *template.Template, root string, fs http.FileSystem, subMod
 					var subMods1 [][]string
 					t, subMods1, err = getTplDeep(root, fs, otherFile, "", t)
 					if err != nil {
-						logs.Error("template parse file err:", err)
+						ErrorLogger.Errorf("template parse file err: %v", err)
 					} else if len(subMods1) > 0 {
 						t, err = _getTemplate(t, root, fs, subMods1, others...)
 					}
@@ -240,13 +239,13 @@ func _getTemplate(t0 *template.Template, root string, fs http.FileSystem, subMod
 				f, err := fs.Open(fileAbsPath)
 				if err != nil {
 					f.Close()
-					logs.Error("template file parse error, not success open file:", err)
+					ErrorLogger.Errorf("template file parse error, not success open file: %v", err)
 					continue
 				}
 				data, err = ioutil.ReadAll(f)
 				f.Close()
 				if err != nil {
-					logs.Error("template file parse error, not success read file:", err)
+					ErrorLogger.Errorf("template file parse error, not success read file: %v", err)
 					continue
 				}
 				reg := regexp.MustCompile(gigTplDelimLeft + "[ ]*define[ ]+\"([^\"]+)\"")
@@ -256,11 +255,11 @@ func _getTemplate(t0 *template.Template, root string, fs http.FileSystem, subMod
 						var subMods1 [][]string
 						t, subMods1, err = getTplDeep(root, fs, otherFile, "", t)
 						if err != nil {
-							logs.Error("template parse file err:", err)
+							ErrorLogger.Errorf("template parse file err: %v", err)
 						} else if len(subMods1) > 0 {
 							t, err = _getTemplate(t, root, fs, subMods1, others...)
 							if err != nil {
-								logs.Error("template parse file err:", err)
+								ErrorLogger.Errorf("template parse file err: %v", err)
 							}
 						}
 						break

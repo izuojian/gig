@@ -1,7 +1,6 @@
 package gig
 
 import (
-	"github.com/izuojian/gig/logs"
 	"net/http"
 	"strings"
 )
@@ -73,7 +72,6 @@ func (engine *Engine) Templates(viewPath string) {
 // 运行http server
 func (engine *Engine) Run(addr string) (err error) {
 	ConsolePrint("HTTP server running on %s (%s)", addr, Mode())
-	logs.Info("HTTP server running on %s (%s)", addr, Mode())
 	return http.ListenAndServe(addr, engine)
 }
 

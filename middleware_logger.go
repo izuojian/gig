@@ -1,7 +1,6 @@
 package gig
 
 import (
-	"github.com/izuojian/gig/logs"
 	"net/http"
 	"time"
 )
@@ -96,7 +95,7 @@ func Logger() HandlerFunc {
 			)
 		}
 
-		logs.Info("%d|%v|%s|%s %s %s",
+		AccessLogger.Infof("%d|%v|%s|%s %s %s",
 			param.StatusCode,
 			param.Latency,
 			param.ClientIP,

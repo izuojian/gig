@@ -13,17 +13,13 @@ import (
 type Config struct {
 	AppName string `ini:"app_name"`
 	RunMode string `ini:"run_mode"`
-	Log     LogConfig
+	System  SysConfig
 }
 
-// 日志文件配置
-type LogConfig struct {
-	Dir        string `ini:"dir"`
-	File       string `ini:"file"`
-	MaxSize    int    `ini:"max_size"`
-	MaxAge     int    `ini:"max_age"`
-	MaxBackups int    `ini:"max_backups"`
-	Compress   bool   `ini:"compress"`
+// 系统配置
+type SysConfig struct {
+	AccessLog string `ini:"access_log"`
+	ErrorLog  string `ini:"error_log"`
 }
 
 var (
@@ -32,7 +28,10 @@ var (
 	// 项目根目录
 	AppPath string
 	// 配置文件目录
-	LogPath string
+	ConfigPath string
+
+	AccessLogger *logs.Logger
+	ErrorLogger  *logs.Logger
 )
 
 func init() {
@@ -44,9 +43,8 @@ func init() {
 		panic(err)
 	}
 
-	LogPath = filepath.Join(AppPath, "config")
-	appConfigName := "app.ini"
-	appConfigFile := filepath.Join(LogPath, appConfigName)
+	ConfigPath = filepath.Join(AppPath, "config")
+	appConfigFile := filepath.Join(ConfigPath, "app.ini")
 	if utils.FileExists(appConfigFile) {
 		err = config.IniFileToMap(GigConfig, appConfigFile)
 		if err != nil {
@@ -55,18 +53,18 @@ func init() {
 		}
 
 		// 读取不同环境的配置
-		envConfFile := filepath.Join(LogPath, GigConfig.RunMode+".app.ini")
-		if utils.FileExists(envConfFile) {
-			config.AllConfigs, err = config.ParseIniFile(envConfFile)
+		envConfigFile := filepath.Join(ConfigPath, GigConfig.RunMode+".app.ini")
+		if utils.FileExists(envConfigFile) {
+			config.AllConfigs, err = config.ParseIniFile(envConfigFile)
 			if err != nil {
 				fmt.Printf("Read config error: %v\n", err)
 				os.Exit(1)
 			}
 
-			// 日志配置
-			err = config.Map("log", &GigConfig.Log)
+			// 系统配置
+			err = config.Map("system", &GigConfig.System)
 			if err != nil {
-				fmt.Printf("Read log config error: %v\n", err)
+				fmt.Printf("Read system config error: %v\n", err)
 				os.Exit(1)
 			}
 		}
@@ -76,28 +74,34 @@ func init() {
 	SetMode(GigConfig.RunMode)
 
 	// 设置系统默认的日志工具
-	logs.SetGigLoggger(logs.LogConfig{
-		Dir:        GigConfig.Log.Dir,
-		File:       GigConfig.Log.File,
-		MaxSize:    GigConfig.Log.MaxSize,
-		MaxAge:     GigConfig.Log.MaxAge,
-		MaxBackups: GigConfig.Log.MaxBackups,
-		Compress:   GigConfig.Log.Compress,
-	})
+	_initSystemLogger(GigConfig.System.AccessLog, GigConfig.System.ErrorLog)
 }
 
-// 默认配置
+// newGigConfig 默认配置
 func newGigConfig() *Config {
 	return &Config{
 		AppName: "gig-app",
 		RunMode: ProdMode,
-		Log: LogConfig{
-			Dir:        "",
-			File:       "app.log",
-			MaxSize:    1024,
-			MaxAge:     7,
-			MaxBackups: 1,
-			Compress:   true,
+		System: SysConfig{
+			AccessLog: "access.log",
+			ErrorLog:  "error.log",
 		},
 	}
+}
+
+// _initSystemLogger 初始化系统使用的日志工具
+func _initSystemLogger(accessLogFile, errorLogFile string) {
+	file, err := os.Create(accessLogFile)
+	if err != nil {
+		fmt.Printf("InitAccessLogger failed, err:%v\n", err)
+		os.Exit(1)
+	}
+	AccessLogger = logs.NewLogger(file)
+
+	file, err = os.Create(errorLogFile)
+	if err != nil {
+		fmt.Printf("InitErrorLogger failed, err:%v\n", err)
+		os.Exit(1)
+	}
+	ErrorLogger = logs.NewLogger(file)
 }

@@ -3,7 +3,6 @@ package gig
 import (
 	"bytes"
 	"fmt"
-	"github.com/izuojian/gig/logs"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -63,7 +62,7 @@ func Recovery() HandlerFunc {
 				if IsDebugging() {
 					ConsolePrintError(message)
 				}
-				logs.Error(message)
+				ErrorLogger.Error(message)
 
 				// If the connection is dead, we can't write a status to it.
 				if brokenPipe {

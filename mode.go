@@ -13,7 +13,7 @@ const (
 )
 
 // 当前版本
-const VERSION = "0.0.3"
+const VERSION = "0.0.5"
 
 var gigMode = devModeCode
 var modeName = DevMode
