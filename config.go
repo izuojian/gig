@@ -91,14 +91,14 @@ func newGigConfig() *Config {
 
 // _initSystemLogger 初始化系统使用的日志工具
 func _initSystemLogger(accessLogFile, errorLogFile string) {
-	file, err := os.Create(accessLogFile)
+	file, err := os.OpenFile(accessLogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		fmt.Printf("InitAccessLogger failed, err:%v\n", err)
 		os.Exit(1)
 	}
 	AccessLogger = logs.NewLogger(file)
 
-	file, err = os.Create(errorLogFile)
+	file, err = os.OpenFile(errorLogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		fmt.Printf("InitErrorLogger failed, err:%v\n", err)
 		os.Exit(1)
