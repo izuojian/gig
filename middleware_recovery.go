@@ -25,6 +25,10 @@ func Recovery() HandlerFunc {
 	return func(c *Context) {
 		defer func() {
 			if err := recover(); err != nil {
+				if err == ErrUserExit {
+					return
+				}
+
 				// Check for a broken connection, as it is not really a
 				// condition that warrants a panic stack trace.
 				var brokenPipe bool

@@ -1,6 +1,7 @@
 package gig
 
 import (
+	"errors"
 	"mime/multipart"
 	"strconv"
 )
@@ -14,6 +15,10 @@ type Controller struct {
 	methodMapping  map[string]func() //method:routertree
 	AppController  interface{}
 }
+
+var (
+	ErrUserExit = errors.New("user stop request manually")
+)
 
 // ControllerInterface is an interface to uniform all controller handler.
 type ControllerInterface interface {
@@ -265,4 +270,11 @@ func (c *Controller) JSON(code int, obj interface{}) {
 
 func (c *Controller) HTML(code int, name string, data interface{}) {
 	c.Ctx.HTML(code, name, data)
+}
+
+/************************************/
+/******** Helper Functions ********/
+/************************************/
+func (c *Controller) Exit() {
+	panic(ErrUserExit)
 }
